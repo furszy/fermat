@@ -1,38 +1,30 @@
 package com.bitdubai.fermat_cbp_plugin.layer.wallet.crypto_broker.developer.bitdubai.version_1.structure;
 
-import com.bitdubai.fermat_api.layer.all_definition.common.system.utils.AddonVersionReference;
 import com.bitdubai.fermat_api.layer.all_definition.crypto.asymmetric.AsymmetricCryptography;
 import com.bitdubai.fermat_api.layer.all_definition.crypto.asymmetric.interfaces.KeyPair;
 import com.bitdubai.fermat_api.layer.all_definition.enums.interfaces.FermatEnum;
-import com.bitdubai.fermat_api.layer.osa_android.database_system.exceptions.CantLoadTableToMemoryException;
 import com.bitdubai.fermat_cbp_api.all_definition.enums.BalanceType;
 import com.bitdubai.fermat_cbp_api.all_definition.enums.CurrencyType;
 import com.bitdubai.fermat_cbp_api.all_definition.enums.TransactionType;
-import com.bitdubai.fermat_cbp_api.all_definition.exceptions.InvalidParameterException;
-import com.bitdubai.fermat_cbp_api.all_definition.negotiation.CustomerBrokerNegotiation;
 import com.bitdubai.fermat_cbp_api.all_definition.wallet.Stock;
 import com.bitdubai.fermat_cbp_api.all_definition.wallet.StockTransaction;
-import com.bitdubai.fermat_cbp_api.all_definition.wallet.WalletTransaction;
-import com.bitdubai.fermat_cbp_api.layer.cbp_wallet.crypto_broker.exceptions.CantAddCreditCryptoBrokerWalletException;
-import com.bitdubai.fermat_cbp_api.layer.cbp_wallet.crypto_broker.exceptions.CantAddDebitCryptoBrokerWalletException;
-import com.bitdubai.fermat_cbp_api.layer.cbp_wallet.crypto_broker.exceptions.CantAddStockCryptoBrokerWalletException;
-import com.bitdubai.fermat_cbp_api.layer.cbp_wallet.crypto_broker.exceptions.CantGetAvailableBalanceCryptoBrokerWalletException;
-import com.bitdubai.fermat_cbp_api.layer.cbp_wallet.crypto_broker.exceptions.CantGetBookedBalanceCryptoBrokerWalletException;
-import com.bitdubai.fermat_cbp_api.layer.cbp_wallet.crypto_broker.exceptions.CantGetStockCollectionCryptoBrokerWalletException;
-import com.bitdubai.fermat_cbp_api.layer.cbp_wallet.crypto_broker.exceptions.CantGetStockCryptoBrokerWalletException;
-import com.bitdubai.fermat_cbp_api.layer.cbp_wallet.crypto_broker.exceptions.CantPerformTransactionException;
-import com.bitdubai.fermat_cbp_api.layer.cbp_wallet.crypto_broker.interfaces.CryptoBrokerStockTransactionRecord;
-import com.bitdubai.fermat_cbp_api.layer.cbp_wallet.crypto_broker.interfaces.CryptoBrokerWallet;
+import com.bitdubai.fermat_cbp_api.layer.wallet.crypto_broker.exceptions.CantAddCreditCryptoBrokerWalletException;
+import com.bitdubai.fermat_cbp_api.layer.wallet.crypto_broker.exceptions.CantAddDebitCryptoBrokerWalletException;
+import com.bitdubai.fermat_cbp_api.layer.wallet.crypto_broker.exceptions.CantAddStockCryptoBrokerWalletException;
+import com.bitdubai.fermat_cbp_api.layer.wallet.crypto_broker.exceptions.CantGetAvailableBalanceCryptoBrokerWalletException;
+import com.bitdubai.fermat_cbp_api.layer.wallet.crypto_broker.exceptions.CantGetBookedBalanceCryptoBrokerWalletException;
+import com.bitdubai.fermat_cbp_api.layer.wallet.crypto_broker.exceptions.CantGetStockCollectionCryptoBrokerWalletException;
+import com.bitdubai.fermat_cbp_api.layer.wallet.crypto_broker.exceptions.CantGetStockCryptoBrokerWalletException;
+import com.bitdubai.fermat_cbp_api.layer.wallet.crypto_broker.exceptions.CantPerformTransactionException;
+import com.bitdubai.fermat_cbp_api.layer.wallet.crypto_broker.interfaces.CryptoBrokerStockTransactionRecord;
+import com.bitdubai.fermat_cbp_api.layer.wallet.crypto_broker.interfaces.CryptoBrokerWallet;
 import com.bitdubai.fermat_cbp_plugin.layer.wallet.crypto_broker.developer.bitdubai.version_1.database.CryptoBrokerWalletDatabaseDao;
 import com.bitdubai.fermat_cbp_plugin.layer.wallet.crypto_broker.developer.bitdubai.version_1.exceptions.CantCreateCryptoBrokerWalletImplException;
 import com.bitdubai.fermat_cbp_plugin.layer.wallet.crypto_broker.developer.bitdubai.version_1.exceptions.CantCreateNewCryptoBrokerWalletException;
 import com.bitdubai.fermat_cbp_plugin.layer.wallet.crypto_broker.developer.bitdubai.version_1.exceptions.CantGetCryptoBrokerWalletImplException;
 import com.bitdubai.fermat_cbp_plugin.layer.wallet.crypto_broker.developer.bitdubai.version_1.exceptions.CantGetCryptoBrokerWalletException;
 
-import java.lang.reflect.Field;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Currency;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.UUID;
@@ -44,9 +36,6 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class CryptoBrokerWalletImpl implements CryptoBrokerWallet {
 
-    private static final int HASH_PRIME_NUMBER_PRODUCT = 5147;
-    private static final int HASH_PRIME_NUMBER_ADD = 4789;
-
     private final KeyPair walletKeyPair;
     private final String ownerPublicKey;
     private final ConcurrentHashMap<CurrencyType, Stock> stockMap;
@@ -57,7 +46,6 @@ public class CryptoBrokerWalletImpl implements CryptoBrokerWallet {
         this.ownerPublicKey = ownerPublicKey;
         this.databaseDao = databaseDao;
         stockMap = new ConcurrentHashMap<>();
-
     }
 
     @Override
@@ -153,6 +141,7 @@ public class CryptoBrokerWalletImpl implements CryptoBrokerWallet {
         KeyPair walletKeyPair = AsymmetricCryptography.createKeyPair(transaction.getWalletPublicKey());
         StockTransaction record = new CryptoBrokerStockTransactionRecordImpl(
                 transaction.getTransactionId(),
+//                transaction.getContractId(),
                 walletKeyPair,
                 transaction.getOwnerPublicKey(),
                 transaction.getBalanceType(),
@@ -174,6 +163,7 @@ public class CryptoBrokerWalletImpl implements CryptoBrokerWallet {
         String memo = "";
         StockTransaction record = new CryptoBrokerStockTransactionRecordImpl(
                 transactionId,
+//                null,
                 this.walletKeyPair,
                 this.ownerPublicKey,
                 balanceType,
@@ -189,18 +179,4 @@ public class CryptoBrokerWalletImpl implements CryptoBrokerWallet {
         return record;
     }
 
-    public boolean equals(Object o){
-        if(!(o instanceof CryptoBrokerStockTransactionRecord))
-            return false;
-        CryptoBrokerStockTransactionRecord compare = (CryptoBrokerStockTransactionRecord) o;
-        return ownerPublicKey.equals(compare.getOwnerPublicKey()) && walletKeyPair.getPublicKey().equals(compare.getWalletPublicKey());
-    }
-
-    @Override
-    public int hashCode(){
-        int c = 0;
-        c += ownerPublicKey.hashCode();
-        c += walletKeyPair.hashCode();
-        return 	HASH_PRIME_NUMBER_PRODUCT * HASH_PRIME_NUMBER_ADD + c;
-    }
 }
