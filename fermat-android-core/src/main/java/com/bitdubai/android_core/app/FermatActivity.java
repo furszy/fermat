@@ -219,7 +219,7 @@ public abstract class FermatActivity extends AppCompatActivity implements
      */
     protected ExecutorService executor;
 
-
+    private Context context;
 
 
     /**
@@ -244,6 +244,7 @@ public abstract class FermatActivity extends AppCompatActivity implements
         }
 
         executor = Executors.newFixedThreadPool(FermatActivityConfiguration.POOL_THREADS);
+        context = this;
 
         broadcastManager = new BroadcastManager(this);
         AndroidCoreUtils.getInstance().setContextAndResume(broadcastManager);
@@ -288,6 +289,7 @@ public abstract class FermatActivity extends AppCompatActivity implements
             getErrorManager().reportUnexpectedUIException(UISource.ACTIVITY, UnexpectedUIExceptionSeverity.UNSTABLE, FermatException.wrapException(e));
 //            makeText(getApplicationContext(), "Oooops! recovering from system error",
 //                    LENGTH_LONG).show();
+            e.printStackTrace();
         }
 
         return super.onCreateOptionsMenu(menu);
@@ -365,6 +367,7 @@ public abstract class FermatActivity extends AppCompatActivity implements
             getErrorManager().reportUnexpectedUIException(UISource.ACTIVITY, UnexpectedUIExceptionSeverity.UNSTABLE, FermatException.wrapException(e));
             makeText(getApplicationContext(), "Recovering from system error",
                     LENGTH_LONG).show();
+            e.printStackTrace();
             handleExceptionAndRestart();
         }
     }
@@ -714,28 +717,22 @@ public abstract class FermatActivity extends AppCompatActivity implements
 
             if (appBarLayout != null)
                 appBarLayout.addOnOffsetChangedListener(new AppBarLayout.OnOffsetChangedListener() {
-                    boolean isShow = false;
                     int scrollRange = -1;
+                    boolean alreadyPerform = false;
 
                     @Override
                     public void onOffsetChanged(AppBarLayout appBarLayout, int verticalOffset) {
                         if (scrollRange == -1) {
                             scrollRange = appBarLayout.getTotalScrollRange();
                         }
-                        if (scrollRange + verticalOffset == 0) {
-                            collapsingToolbarLayout.setTitle("");
-                            if(!isShow)
-                                for(ElementsWithAnimation element : elementsWithAnimation){
-                                    element.startCollapseAnimation(scrollRange);
-                                }
-
-                            isShow = true;
-                        } else if (isShow) {
-                            collapsingToolbarLayout.setTitle("");
-                            for(ElementsWithAnimation element : elementsWithAnimation){
-                                element.startExpandAnimation(scrollRange);
-                            }
-                            isShow = false;
+                        if(verticalOffset == 0) {
+                            alreadyPerform = false;
+                            for(ElementsWithAnimation element : elementsWithAnimation)
+                                element.startCollapseAnimation(context, verticalOffset);
+                        } else if (verticalOffset < 0 && !alreadyPerform) {
+                            alreadyPerform = true;
+                            for(ElementsWithAnimation element : elementsWithAnimation)
+                                element.startExpandAnimation(context, verticalOffset);
                         }
                     }
                 });
@@ -1067,6 +1064,7 @@ public abstract class FermatActivity extends AppCompatActivity implements
             getErrorManager().reportUnexpectedUIException(UISource.ACTIVITY, UnexpectedUIExceptionSeverity.CRASH, FermatException.wrapException(e));
             makeText(getApplicationContext(), "Recovering from system error",
                     LENGTH_LONG).show();
+            e.printStackTrace();
         }
     }
 
@@ -1115,6 +1113,7 @@ public abstract class FermatActivity extends AppCompatActivity implements
 
             makeText(getApplicationContext(), "Recovering from system error",
                     LENGTH_LONG).show();
+            e.printStackTrace();
         }
     }
 
@@ -1253,6 +1252,7 @@ public abstract class FermatActivity extends AppCompatActivity implements
         } catch (Exception ex) {
             getErrorManager().reportUnexpectedUIException(UISource.ACTIVITY, UnexpectedUIExceptionSeverity.UNSTABLE, FermatException.wrapException(ex));
             makeText(getApplicationContext(), "Recovering from system error", LENGTH_SHORT).show();
+            ex.printStackTrace();
             handleExceptionAndRestart();
         }
     }
@@ -1712,15 +1712,20 @@ public abstract class FermatActivity extends AppCompatActivity implements
      * Report error
      */
     public void reportError(String mailUserTo) throws Exception {
-        YourOwnSender yourOwnSender = new YourOwnSender(this);
-        yourOwnSender.send(mailUserTo, LogReader.getLog().toString());
+//        YourOwnSender yourOwnSender = new YourOwnSender(this);
+//        String log = LogReader.getLog().toString();
+//        yourOwnSender.send(mailUserTo,log );
+        LogReader.getLog(this,mailUserTo);
+      //  AndroidExternalAppsIntentHelper.sendMail(this,new String[]{mailUserTo},"Error report",log);
+
+
     }
 
     //send mail
 
     public void sendMailExternal(String mailUserTo, String bodyText) throws Exception {
         YourOwnSender yourOwnSender = new YourOwnSender(this);
-        yourOwnSender.send(mailUserTo, bodyText);
+        yourOwnSender.sendPrivateKey(mailUserTo, bodyText);
     }
 
     @Override
