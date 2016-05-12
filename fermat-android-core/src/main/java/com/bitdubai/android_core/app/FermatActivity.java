@@ -3,6 +3,7 @@ package com.bitdubai.android_core.app;
 import android.app.WallpaperManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -51,7 +52,7 @@ import com.bitdubai.android_core.app.common.version_1.base_structure.config.Ferm
 import com.bitdubai.android_core.app.common.version_1.bottom_navigation.BottomNavigation;
 import com.bitdubai.android_core.app.common.version_1.builders.FooterBuilder;
 import com.bitdubai.android_core.app.common.version_1.builders.SideMenuBuilder;
-import com.bitdubai.android_core.app.common.version_1.classes.BroadcastManager;
+import com.bitdubai.android_core.app.common.version_1.classes.NotificationReceiver;
 import com.bitdubai.android_core.app.common.version_1.communication.client_system_broker.exceptions.CantCreateProxyException;
 import com.bitdubai.android_core.app.common.version_1.connection_manager.FermatAppConnectionManager;
 import com.bitdubai.android_core.app.common.version_1.navigation_view.FermatActionBarDrawerEventListener;
@@ -64,7 +65,6 @@ import com.bitdubai.android_core.app.common.version_1.runtime_estructure_manager
 import com.bitdubai.android_core.app.common.version_1.util.AndroidCoreUtils;
 import com.bitdubai.android_core.app.common.version_1.util.LogReader;
 import com.bitdubai.android_core.app.common.version_1.util.MainLayoutHelper;
-import com.bitdubai.android_core.app.common.version_1.util.ServiceCallback;
 import com.bitdubai.android_core.app.common.version_1.util.SharedMemory;
 import com.bitdubai.android_core.app.common.version_1.util.mail.YourOwnSender;
 import com.bitdubai.android_core.app.common.version_1.util.system.FermatSystemUtils;
@@ -115,7 +115,7 @@ import com.bitdubai.fermat_api.layer.modules.exceptions.CantGetSelectedActorIden
 import com.bitdubai.fermat_api.layer.osa_android.broadcaster.FermatBundle;
 import com.bitdubai.fermat_api.layer.pip_engine.desktop_runtime.DesktopObject;
 import com.bitdubai.fermat_api.layer.pip_engine.desktop_runtime.DesktopRuntimeManager;
-import com.bitdubai.fermat_api.layer.all_definition.common.system.interfaces.error_manager.enums.UnexpectedUIExceptionSeverity;
+import com.bitdubai.fermat_pip_api.layer.platform_service.error_manager.enums.UnexpectedUIExceptionSeverity;
 import com.bitdubai.sub_app.manager.fragment.DesktopSubAppFragment;
 import com.bitdubai.sub_app.wallet_manager.fragment_factory.DesktopFragmentsEnumType;
 
@@ -148,8 +148,7 @@ public abstract class FermatActivity extends AppCompatActivity implements
         NavigationView.OnNavigationItemSelectedListener,
         FermatStates,
         FermatActivityManager,
-        FermatListItemListeners<com.bitdubai.fermat_api.layer.all_definition.navigation_structure.MenuItem>,
-        ServiceCallback {
+        FermatListItemListeners<com.bitdubai.fermat_api.layer.all_definition.navigation_structure.MenuItem>{
 
 
     private static final String TAG = "fermat-core";
@@ -162,10 +161,6 @@ public abstract class FermatActivity extends AppCompatActivity implements
     protected TabsPagerAdapter adapter;
     private ScreenPagerAdapter screenPagerAdapter;
 
-    /**
-     * Manager
-     */
-    private BroadcastManager broadcastManager;
     /**
      * WizardTypes
      */
@@ -219,7 +214,10 @@ public abstract class FermatActivity extends AppCompatActivity implements
      */
     protected ExecutorService executor;
 
-    private Context context;
+    /**
+     * receivers
+     */
+    NotificationReceiver notificationReceiver;
 
 
 
@@ -245,13 +243,16 @@ public abstract class FermatActivity extends AppCompatActivity implements
         }
 
         executor = Executors.newFixedThreadPool(FermatActivityConfiguration.POOL_THREADS);
-        context = this;
 
-        broadcastManager = new BroadcastManager(this);
-        AndroidCoreUtils.getInstance().setContextAndResume(broadcastManager);
+//        broadcastManager = new BroadcastManager(this);
+//        AndroidCoreUtils.getInstance().setContextAndResume(broadcastManager);
         if(!AndroidCoreUtils.getInstance().isStarted())
             AndroidCoreUtils.getInstance().setStarted(true);
         runtimeStructureManager = new RuntimeStructureManager(this);
+
+        notificationReceiver = new NotificationReceiver(this);
+        IntentFilter intentFilter = new IntentFilter(NotificationReceiver.INTENT_NAME);
+        registerReceiver(notificationReceiver, intentFilter);
 
     }
 
@@ -290,7 +291,6 @@ public abstract class FermatActivity extends AppCompatActivity implements
             getErrorManager().reportUnexpectedUIException(UISource.ACTIVITY, UnexpectedUIExceptionSeverity.UNSTABLE, FermatException.wrapException(e));
 //            makeText(getApplicationContext(), "Oooops! recovering from system error",
 //                    LENGTH_LONG).show();
-            e.printStackTrace();
         }
 
         return super.onCreateOptionsMenu(menu);
@@ -309,6 +309,8 @@ public abstract class FermatActivity extends AppCompatActivity implements
 //                e.printStackTrace();
 //            }
 //
+            unregisterReceiver(notificationReceiver);
+            notificationReceiver.clear();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -368,7 +370,6 @@ public abstract class FermatActivity extends AppCompatActivity implements
             getErrorManager().reportUnexpectedUIException(UISource.ACTIVITY, UnexpectedUIExceptionSeverity.UNSTABLE, FermatException.wrapException(e));
             makeText(getApplicationContext(), "Recovering from system error",
                     LENGTH_LONG).show();
-            e.printStackTrace();
             handleExceptionAndRestart();
         }
     }
@@ -718,7 +719,7 @@ public abstract class FermatActivity extends AppCompatActivity implements
 
             if (appBarLayout != null)
                 appBarLayout.addOnOffsetChangedListener(new AppBarLayout.OnOffsetChangedListener() {
-                    boolean alreadyPerform = false;
+                    boolean isShow = false;
                     int scrollRange = -1;
 
                     @Override
@@ -726,14 +727,20 @@ public abstract class FermatActivity extends AppCompatActivity implements
                         if (scrollRange == -1) {
                             scrollRange = appBarLayout.getTotalScrollRange();
                         }
-                        if(verticalOffset == 0) {
-                            alreadyPerform = false;
-                            for(ElementsWithAnimation element : elementsWithAnimation)
-                                element.startCollapseAnimation(context, verticalOffset);
-                        } else if (verticalOffset < 0 && !alreadyPerform) {
-                            alreadyPerform = true;
-                            for(ElementsWithAnimation element : elementsWithAnimation)
-                                element.startExpandAnimation(context, verticalOffset);
+                        if (scrollRange + verticalOffset == 0) {
+                            collapsingToolbarLayout.setTitle("");
+                            if(!isShow)
+                                for(ElementsWithAnimation element : elementsWithAnimation){
+                                    element.startCollapseAnimation(scrollRange);
+                                }
+
+                            isShow = true;
+                        } else if (isShow) {
+                            collapsingToolbarLayout.setTitle("");
+                            for(ElementsWithAnimation element : elementsWithAnimation){
+                                element.startExpandAnimation(scrollRange);
+                            }
+                            isShow = false;
                         }
                     }
                 });
@@ -1065,7 +1072,6 @@ public abstract class FermatActivity extends AppCompatActivity implements
             getErrorManager().reportUnexpectedUIException(UISource.ACTIVITY, UnexpectedUIExceptionSeverity.CRASH, FermatException.wrapException(e));
             makeText(getApplicationContext(), "Recovering from system error",
                     LENGTH_LONG).show();
-            e.printStackTrace();
         }
     }
 
@@ -1114,7 +1120,6 @@ public abstract class FermatActivity extends AppCompatActivity implements
 
             makeText(getApplicationContext(), "Recovering from system error",
                     LENGTH_LONG).show();
-            e.printStackTrace();
         }
     }
 
@@ -1253,7 +1258,6 @@ public abstract class FermatActivity extends AppCompatActivity implements
         } catch (Exception ex) {
             getErrorManager().reportUnexpectedUIException(UISource.ACTIVITY, UnexpectedUIExceptionSeverity.UNSTABLE, FermatException.wrapException(ex));
             makeText(getApplicationContext(), "Recovering from system error", LENGTH_SHORT).show();
-            ex.printStackTrace();
             handleExceptionAndRestart();
         }
     }
@@ -1377,12 +1381,12 @@ public abstract class FermatActivity extends AppCompatActivity implements
                 runtimeStructureManager.clear();
             }
 
-            try {
-                broadcastManager.stop();
-                AndroidCoreUtils.getInstance().clear(broadcastManager);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+//            try {
+//                broadcastManager.stop();
+//                AndroidCoreUtils.getInstance().clear(broadcastManager);
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//            }
 
 
             /**
@@ -1658,10 +1662,13 @@ public abstract class FermatActivity extends AppCompatActivity implements
 
     }
 
-    public void addCollapseAnimation(ElementsWithAnimation elementsWithAnimation){
+    public void addCollapseAnimation(ElementsWithAnimation elementsWithAnimation) {
         this.elementsWithAnimation.add(elementsWithAnimation);
     }
 
+    public void removeCollapseAnimation(ElementsWithAnimation elementsWithAnimation){
+        this.elementsWithAnimation.remove(elementsWithAnimation);
+    }
 
 
     /**
@@ -1710,20 +1717,15 @@ public abstract class FermatActivity extends AppCompatActivity implements
      * Report error
      */
     public void reportError(String mailUserTo) throws Exception {
-//        YourOwnSender yourOwnSender = new YourOwnSender(this);
-//        String log = LogReader.getLog().toString();
-//        yourOwnSender.send(mailUserTo,log );
-        LogReader.getLog(this,mailUserTo);
-      //  AndroidExternalAppsIntentHelper.sendMail(this,new String[]{mailUserTo},"Error report",log);
-
-
+        YourOwnSender yourOwnSender = new YourOwnSender(this);
+        yourOwnSender.send(mailUserTo, LogReader.getLog().toString());
     }
 
     //send mail
 
     public void sendMailExternal(String mailUserTo, String bodyText) throws Exception {
         YourOwnSender yourOwnSender = new YourOwnSender(this);
-        yourOwnSender.sendPrivateKey(mailUserTo, bodyText);
+        yourOwnSender.send(mailUserTo, bodyText);
     }
 
     @Override
@@ -1734,7 +1736,7 @@ public abstract class FermatActivity extends AppCompatActivity implements
     @Override
     protected void onPause() {
         super.onPause();
-        if(broadcastManager!=null)broadcastManager.stop();
+//        if(broadcastManager!=null)broadcastManager.stop();
 //        networkStateReceiver.removeListener(this);
     }
 
@@ -1795,17 +1797,7 @@ public abstract class FermatActivity extends AppCompatActivity implements
         finish();
     }
 
-    private ServiceCallback getServiceCallback(){
-        return this;
-    }
 
-
-    @Override
-    public void callback(int option) {
-        if (option==1){
-
-        }
-    }
 
     @Override
     public FermatRuntime getRuntimeManager(){
@@ -1857,10 +1849,6 @@ public abstract class FermatActivity extends AppCompatActivity implements
         return adapter;
     }
 
-
-    public BroadcastManager getBroadcastManager() {
-        return broadcastManager;
-    }
 
     @Override
     public Toolbar getToolbar() {
