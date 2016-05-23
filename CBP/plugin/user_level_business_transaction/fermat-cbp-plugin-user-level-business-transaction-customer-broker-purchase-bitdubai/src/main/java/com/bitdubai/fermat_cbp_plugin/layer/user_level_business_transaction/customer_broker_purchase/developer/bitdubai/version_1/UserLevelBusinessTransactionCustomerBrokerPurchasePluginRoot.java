@@ -21,6 +21,7 @@ import com.bitdubai.fermat_api.layer.all_definition.enums.Plugins;
 import com.bitdubai.fermat_api.layer.all_definition.enums.ServiceStatus;
 import com.bitdubai.fermat_api.layer.all_definition.events.EventSource;
 import com.bitdubai.fermat_api.layer.all_definition.util.Version;
+import com.bitdubai.fermat_api.layer.core.PluginInfo;
 import com.bitdubai.fermat_api.layer.osa_android.broadcaster.Broadcaster;
 import com.bitdubai.fermat_api.layer.osa_android.database_system.PluginDatabaseSystem;
 import com.bitdubai.fermat_api.layer.osa_android.logger_system.LogLevel;
@@ -36,8 +37,8 @@ import com.bitdubai.fermat_cbp_plugin.layer.user_level_business_transaction.cust
 import com.bitdubai.fermat_cbp_plugin.layer.user_level_business_transaction.customer_broker_purchase.developer.bitdubai.version_1.structure.UserLevelBusinessTransactionCustomerBrokerPurchaseManager;
 import com.bitdubai.fermat_cbp_plugin.layer.user_level_business_transaction.customer_broker_purchase.developer.bitdubai.version_1.structure.events.UserLevelBusinessTransactionCustomerBrokerPurchaseMonitorAgent;
 import com.bitdubai.fermat_cer_api.layer.search.interfaces.CurrencyExchangeProviderFilterManager;
-import com.bitdubai.fermat_pip_api.layer.platform_service.error_manager.enums.UnexpectedPluginExceptionSeverity;
-import com.bitdubai.fermat_pip_api.layer.platform_service.error_manager.interfaces.ErrorManager;
+import com.bitdubai.fermat_api.layer.all_definition.common.system.interfaces.error_manager.enums.UnexpectedPluginExceptionSeverity;
+import com.bitdubai.fermat_api.layer.all_definition.common.system.interfaces.ErrorManager;
 import com.bitdubai.fermat_pip_api.layer.platform_service.event_manager.interfaces.EventManager;
 
 import java.util.ArrayList;
@@ -51,7 +52,7 @@ import java.util.regex.Pattern;
  * Created by Yordin Alayn on 16.09.15.
  * Modified by Franklin Marcano 10.12.15
  */
-
+@PluginInfo(createdBy = "franklinmarcano1970", maintainerMail = "franklinmarcano1970@gmail.com", platform = Platforms.CRYPTO_BROKER_PLATFORM, layer = Layers.USER_LEVEL_BUSINESS_TRANSACTION, plugin = Plugins.CUSTOMER_BROKER_PURCHASE)
 public class UserLevelBusinessTransactionCustomerBrokerPurchasePluginRoot extends AbstractPlugin implements
         DatabaseManagerForDevelopers,
         LogManagerForDevelopers {
@@ -211,7 +212,7 @@ public class UserLevelBusinessTransactionCustomerBrokerPurchasePluginRoot extend
         return developerDatabaseTableRecordList;
     }
 
-    UserLevelBusinessTransactionCustomerBrokerPurchaseMonitorAgent userLevelBusinessTransactionCustomerBrokerPurchaseMonitorAgent;
+    UserLevelBusinessTransactionCustomerBrokerPurchaseMonitorAgent agent;
 
     /**
      * This method will start the Monitor Agent that watches the asyncronic process registered in the bank money restock plugin
@@ -220,8 +221,9 @@ public class UserLevelBusinessTransactionCustomerBrokerPurchasePluginRoot extend
      */
     private void startMonitorAgent() throws CantStartAgentException {
 
-        if (userLevelBusinessTransactionCustomerBrokerPurchaseMonitorAgent == null) {
-            userLevelBusinessTransactionCustomerBrokerPurchaseMonitorAgent = new UserLevelBusinessTransactionCustomerBrokerPurchaseMonitorAgent(errorManager,
+        if (agent == null) {
+            agent = new UserLevelBusinessTransactionCustomerBrokerPurchaseMonitorAgent(
+                    errorManager,
                     customerBrokerPurchaseNegotiationManager,
                     pluginDatabaseSystem,
                     pluginId,
@@ -229,13 +231,11 @@ public class UserLevelBusinessTransactionCustomerBrokerPurchasePluginRoot extend
                     closeContractManager,
                     customerBrokerContractPurchaseManager,
                     currencyExchangeRateProviderFilter,
-                    //notificationManagerMiddleware,
-                    customerBrokerPurchaseManager,
                     cryptoBrokerWalletManager,
-                    broadcaster
-                    );
-            userLevelBusinessTransactionCustomerBrokerPurchaseMonitorAgent.start();
-        } else userLevelBusinessTransactionCustomerBrokerPurchaseMonitorAgent.start();
+                    broadcaster);
+        }
+
+        agent.start();
     }
 
     public EventManager getEventManager() {

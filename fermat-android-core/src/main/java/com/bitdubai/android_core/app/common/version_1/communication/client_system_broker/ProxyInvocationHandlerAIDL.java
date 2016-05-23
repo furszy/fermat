@@ -1,7 +1,5 @@
 package com.bitdubai.android_core.app.common.version_1.communication.client_system_broker;
 
-import android.util.Log;
-
 import com.bitdubai.fermat_api.layer.all_definition.common.system.utils.PluginVersionReference;
 import com.bitdubai.fermat_api.layer.modules.interfaces.ModuleManager;
 
@@ -30,17 +28,22 @@ public class ProxyInvocationHandlerAIDL<T extends ModuleManager> implements Invo
             throws Throwable {
 
 
-        Log.i(TAG,"object: "+ proxy.getClass().getInterfaces());
-        Log.i(TAG,"method: "+ method.getName());
-        Log.i(TAG, "args: " + args);
+//        Log.i(TAG,"object: "+ proxy.getClass().getInterfaces());
+//        Log.i(TAG,"method: "+ method.getName());
+//        Log.i(TAG, "args: " + args);
 
 
-        return clientSystemBrokerService.sendMessage(
-                pluginVersionReference,
-                responseStr,
-               proxy,
-               method,
-               args);
+        Object returnedObject = clientSystemBrokerService.sendMessage(
+                                    pluginVersionReference,
+                                    responseStr,
+                                   proxy,
+                                   method,
+                                   args);
+        if(returnedObject instanceof Exception){
+            throw (Throwable) returnedObject;
+        }else {
+            return returnedObject;
+        }
 
     }
 

@@ -19,8 +19,8 @@ import com.bitdubai.fermat_cbp_api.layer.negotiation.customer_broker_purchase.in
 import com.bitdubai.fermat_cbp_api.layer.negotiation.exceptions.CantGetListClauseException;
 import com.bitdubai.fermat_cbp_api.layer.network_service.transaction_transmission.interfaces.TransactionTransmissionManager;
 import com.bitdubai.fermat_cbp_plugin.layer.business_transaction.open_contract.developer.bitdubai.version_1.database.OpenContractBusinessTransactionDao;
-import com.bitdubai.fermat_pip_api.layer.platform_service.error_manager.enums.UnexpectedPluginExceptionSeverity;
-import com.bitdubai.fermat_pip_api.layer.platform_service.error_manager.interfaces.ErrorManager;
+import com.bitdubai.fermat_api.layer.all_definition.common.system.interfaces.error_manager.enums.UnexpectedPluginExceptionSeverity;
+import com.bitdubai.fermat_api.layer.all_definition.common.system.interfaces.ErrorManager;
 
 import java.util.Collection;
 
@@ -99,7 +99,8 @@ public class OpenContractCustomerContractManager extends AbstractOpenContract {
                     referencePrice);
             /*TODO: INICIAR COMO pausado el estado del contrato (la open contract business transaction es la responsable de iniciar el contrato en
               TODO: PENDING_PAYMENT una vez se haya validado el hash y los datos del contrato*/
-            contractRecord.setStatus(ContractStatus.PENDING_PAYMENT);
+//            contractRecord.setStatus(ContractStatus.PENDING_PAYMENT);
+            contractRecord.setStatus(ContractStatus.PAUSED);
             this.openContractBusinessTransactionDao.persistContractRecord(
                     contractRecord,
                     contractType);

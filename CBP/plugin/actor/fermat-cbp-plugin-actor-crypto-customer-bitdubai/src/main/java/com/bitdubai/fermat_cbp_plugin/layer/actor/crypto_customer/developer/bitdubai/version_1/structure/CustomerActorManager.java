@@ -21,8 +21,8 @@ import com.bitdubai.fermat_cbp_api.layer.actor.crypto_customer.interfaces.Custom
 import com.bitdubai.fermat_cbp_api.layer.actor_network_service.crypto_broker.exceptions.CantRequestQuotesException;
 import com.bitdubai.fermat_cbp_api.layer.actor_network_service.crypto_broker.interfaces.CryptoBrokerManager;
 import com.bitdubai.fermat_cbp_plugin.layer.actor.crypto_customer.developer.bitdubai.version_1.database.CryptoCustomerActorDao;
-import com.bitdubai.fermat_pip_api.layer.platform_service.error_manager.enums.UnexpectedPluginExceptionSeverity;
-import com.bitdubai.fermat_pip_api.layer.platform_service.error_manager.interfaces.ErrorManager;
+import com.bitdubai.fermat_api.layer.all_definition.common.system.interfaces.error_manager.enums.UnexpectedPluginExceptionSeverity;
+import com.bitdubai.fermat_api.layer.all_definition.common.system.interfaces.ErrorManager;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -252,13 +252,6 @@ public final class CustomerActorManager implements ActorExtraDataManager {
     }
 
     @Override
-    public Collection<Platforms> getPlatformsSupport(final String   customerPublicKey,
-                                                     final Currency currency         ) throws CantGetListPlatformsException {
-
-        return new ArrayList<>();
-    }
-
-    @Override
     public void requestBrokerExtraData(final ActorExtraData actorExtraData) throws CantRequestBrokerExtraDataException {
 
         try {
@@ -281,4 +274,10 @@ public final class CustomerActorManager implements ActorExtraDataManager {
             throw new CantRequestBrokerExtraDataException(FermatException.wrapException(e), "actorExtraData: "+actorExtraData, "Unhandled error.");
         }
     }
+
+    @Override
+    public Collection<Platforms> getPlatformsSupported(String customerPublicKey, String brokerPublicKey, String paymentCurrency) throws CantGetListActorExtraDataException {
+        return this.dao.getPlatformsSupported(customerPublicKey, brokerPublicKey, paymentCurrency);
+    }
+
 }

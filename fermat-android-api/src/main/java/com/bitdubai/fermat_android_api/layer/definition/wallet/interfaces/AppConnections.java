@@ -1,13 +1,16 @@
 package com.bitdubai.fermat_android_api.layer.definition.wallet.interfaces;
 
 import android.content.Context;
+
+import com.bitdubai.fermat_android_api.engine.FermatApplicationCaller;
+import com.bitdubai.fermat_android_api.engine.FermatApplicationSession;
 import com.bitdubai.fermat_android_api.engine.NotificationPainter;
 import com.bitdubai.fermat_android_api.layer.definition.wallet.abstracts.AbstractFermatSession;
 import com.bitdubai.fermat_api.layer.all_definition.common.system.utils.PluginVersionReference;
 import com.bitdubai.fermat_api.layer.all_definition.runtime.FermatApp;
 import com.bitdubai.fermat_api.layer.modules.common_classes.ActiveActorIdentityInformation;
 import com.bitdubai.fermat_api.layer.modules.interfaces.ModuleManager;
-import com.bitdubai.fermat_pip_api.layer.platform_service.error_manager.interfaces.ErrorManager;
+import com.bitdubai.fermat_api.layer.all_definition.common.system.interfaces.ErrorManager;
 
 import java.lang.ref.WeakReference;
 
@@ -67,5 +70,20 @@ public abstract class AppConnections<S extends FermatSession> implements FermatA
 
     public NotificationPainter getNotificationPainter(String code){
         return null;
+    }
+
+
+
+
+    public void changeApp(String appPublicKey) throws Exception {
+        getApplicationManager().openFermatApp(appPublicKey);
+    }
+
+    public void goHome(){
+        getApplicationManager().openFermatHome();
+    }
+
+    public FermatApplicationCaller getApplicationManager(){
+        return ((FermatApplicationSession)activity.get()).getApplicationManager();
     }
 }
