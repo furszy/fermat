@@ -15,6 +15,9 @@ import android.provider.MediaStore;
 import android.support.v4.graphics.drawable.RoundedBitmapDrawable;
 import android.support.v4.graphics.drawable.RoundedBitmapDrawableFactory;
 import android.support.v7.widget.Toolbar;
+import android.text.Editable;
+import android.text.InputFilter;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -28,13 +31,14 @@ import android.widget.Toast;
 import com.bitdubai.fermat_android_api.layer.definition.wallet.AbstractFermatFragment;
 import com.bitdubai.fermat_android_api.layer.definition.wallet.interfaces.ReferenceAppFermatSession;
 import com.bitdubai.fermat_android_api.layer.definition.wallet.utils.ImagesUtils;
+import com.bitdubai.fermat_android_api.layer.definition.wallet.views.FermatTextView;
 import com.bitdubai.fermat_android_api.ui.interfaces.FermatWorkerCallBack;
 import com.bitdubai.fermat_android_api.ui.util.FermatWorker;
 import com.bitdubai.fermat_api.layer.all_definition.common.system.interfaces.error_manager.enums.UnexpectedSubAppExceptionSeverity;
 import com.bitdubai.fermat_api.layer.all_definition.navigation_structure.enums.Activities;
 import com.bitdubai.fermat_api.layer.dmp_engine.sub_app_runtime.enums.SubApps;
 import com.bitdubai.fermat_api.layer.pip_engine.interfaces.ResourceProviderManager;
-import com.bitdubai.fermat_cbp_api.all_definition.enums.Frecuency;
+import com.bitdubai.fermat_cbp_api.all_definition.enums.Frequency;
 import com.bitdubai.fermat_cbp_api.layer.identity.crypto_broker.ExposureLevel;
 import com.bitdubai.fermat_cbp_api.layer.sub_app_module.crypto_customer_identity.Utils.CryptoCustomerIdentityInformationImpl;
 import com.bitdubai.fermat_cbp_api.layer.sub_app_module.crypto_customer_identity.interfaces.CryptoCustomerIdentityInformation;
@@ -69,9 +73,17 @@ public class EditCryptoCustomerIdentityFragment extends AbstractFermatFragment<R
     // UI
     private EditText mCustomerName;
     private View progressBar;
+    private int maxLenghtTextCount = 30;
+    FermatTextView textCount;
 
     private ExecutorService executor;
 
+
+    private final TextWatcher textWatcher = new TextWatcher() {
+        public void onTextChanged(CharSequence s, int start, int before, int count) {textCount.setText(String.valueOf(maxLenghtTextCount - s.length()));}
+        public void afterTextChanged(Editable s) {}
+        public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+    };
 
     public static EditCryptoCustomerIdentityFragment newInstance() {
         return new EditCryptoCustomerIdentityFragment();
@@ -117,6 +129,8 @@ public class EditCryptoCustomerIdentityFragment extends AbstractFermatFragment<R
 
         progressBar = layout.findViewById(R.id.cci_progress_bar);
         mCustomerName = (EditText) layout.findViewById(R.id.crypto_customer_name);
+        textCount = (FermatTextView) layout.findViewById(R.id.crypto_customer_name_text_count);
+
         final ImageView mCustomerImage = (ImageView) layout.findViewById(R.id.crypto_customer_image);
         final ImageView camara = (ImageView) layout.findViewById(R.id.camara);
         final ImageView galeria = (ImageView) layout.findViewById(R.id.galeria);
@@ -146,6 +160,9 @@ public class EditCryptoCustomerIdentityFragment extends AbstractFermatFragment<R
 
         mCustomerName.requestFocus();
         mCustomerName.performClick();
+        mCustomerName.setFilters(new InputFilter[]{new InputFilter.LengthFilter(maxLenghtTextCount)});
+        mCustomerName.addTextChangedListener(textWatcher);
+        textCount.setText(String.valueOf(maxLenghtTextCount));
 
         mCustomerName.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override
@@ -282,7 +299,7 @@ public class EditCryptoCustomerIdentityFragment extends AbstractFermatFragment<R
 
         } else {
             final int accuracy = getAccuracyData();
-            final Frecuency frequency = getFrequencyData();
+            final Frequency frequency = getFrequencyData();
 
             CryptoCustomerIdentityInformationImpl identity = new CryptoCustomerIdentityInformationImpl(customerNameText, cryptoCustomerPublicKey,
                     imgInBytes, ExposureLevel.PUBLISH, accuracy, frequency);
@@ -313,8 +330,8 @@ public class EditCryptoCustomerIdentityFragment extends AbstractFermatFragment<R
                 (int) appSession.getData(FragmentsCommons.ACCURACY_DATA);
     }
 
-    private Frecuency getFrequencyData() {
-        return appSession.getData(FragmentsCommons.FREQUENCY_DATA) == null ? Frecuency.NONE :
-                (Frecuency) appSession.getData(FragmentsCommons.FREQUENCY_DATA);
+    private Frequency getFrequencyData() {
+        return appSession.getData(FragmentsCommons.FREQUENCY_DATA) == null ? Frequency.NONE :
+                (Frequency) appSession.getData(FragmentsCommons.FREQUENCY_DATA);
     }
 }

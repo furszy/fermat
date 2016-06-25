@@ -10,6 +10,9 @@ import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.text.Editable;
+import android.text.InputFilter;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -23,13 +26,14 @@ import android.widget.Toast;
 
 import com.bitdubai.fermat_android_api.layer.definition.wallet.AbstractFermatFragment;
 import com.bitdubai.fermat_android_api.layer.definition.wallet.interfaces.ReferenceAppFermatSession;
+import com.bitdubai.fermat_android_api.layer.definition.wallet.views.FermatTextView;
 import com.bitdubai.fermat_android_api.ui.interfaces.FermatWorkerCallBack;
 import com.bitdubai.fermat_android_api.ui.util.FermatWorker;
 import com.bitdubai.fermat_api.layer.all_definition.common.system.interfaces.error_manager.enums.UnexpectedSubAppExceptionSeverity;
 import com.bitdubai.fermat_api.layer.all_definition.navigation_structure.enums.Activities;
 import com.bitdubai.fermat_api.layer.dmp_engine.sub_app_runtime.enums.SubApps;
 import com.bitdubai.fermat_api.layer.pip_engine.interfaces.ResourceProviderManager;
-import com.bitdubai.fermat_cbp_api.all_definition.enums.Frecuency;
+import com.bitdubai.fermat_cbp_api.all_definition.enums.Frequency;
 import com.bitdubai.fermat_cbp_api.layer.identity.crypto_broker.ExposureLevel;
 import com.bitdubai.fermat_cbp_api.layer.sub_app_module.crypto_broker_identity.interfaces.CryptoBrokerIdentityInformation;
 import com.bitdubai.fermat_cbp_api.layer.sub_app_module.crypto_broker_identity.interfaces.CryptoBrokerIdentityModuleManager;
@@ -67,10 +71,17 @@ public class EditCryptoBrokerIdentityFragment
     private ImageView sw;
     private EditText mBrokerName;
     private View progressBar;
+    private int maxLenghtTextCount = 30;
+    FermatTextView textCount;
 
     private ExecutorService executor;
     private byte[] profileImage;
 
+    private final TextWatcher textWatcher = new TextWatcher() {
+        public void onTextChanged(CharSequence s, int start, int before, int count) {textCount.setText(String.valueOf(maxLenghtTextCount - s.length()));}
+        public void afterTextChanged(Editable s) {}
+        public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+    };
 
     public static EditCryptoBrokerIdentityFragment newInstance() {
         return new EditCryptoBrokerIdentityFragment();
@@ -109,6 +120,8 @@ public class EditCryptoBrokerIdentityFragment
 
         progressBar = layout.findViewById(R.id.cbi_progress_bar);
         mBrokerName = (EditText) layout.findViewById(R.id.crypto_broker_name);
+        textCount = (FermatTextView) layout.findViewById(R.id.crypto_broker_name_text_count);
+
         sw = (ImageView) layout.findViewById(R.id.sw);
         final ImageView mBrokerImage = (ImageView) layout.findViewById(R.id.crypto_broker_image);
         final Button botonU = (Button) layout.findViewById(R.id.update_crypto_broker_button);
@@ -189,6 +202,9 @@ public class EditCryptoBrokerIdentityFragment
 
         mBrokerName.requestFocus();
         mBrokerName.performClick();
+        mBrokerName.setFilters(new InputFilter[]{new InputFilter.LengthFilter(maxLenghtTextCount)});
+        mBrokerName.addTextChangedListener(textWatcher);
+        textCount.setText(String.valueOf(maxLenghtTextCount));
 
         mBrokerName.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override
@@ -297,7 +313,7 @@ public class EditCryptoBrokerIdentityFragment
 
         } else {
             final int accuracy = getAccuracyData();
-            final Frecuency frequency = getFrequencyData();
+            final Frequency frequency = getFrequencyData();
 
             CryptoBrokerIdentityInformation identity = new CryptoBrokerIdentityInformationImpl(brokerNameText, cryptoBrokerPublicKey,
                     imgInBytes, exposureLevel, accuracy, frequency);
@@ -328,8 +344,8 @@ public class EditCryptoBrokerIdentityFragment
                 (int) appSession.getData(FragmentsCommons.ACCURACY_DATA);
     }
 
-    private Frecuency getFrequencyData() {
-        return appSession.getData(FragmentsCommons.FREQUENCY_DATA) == null ? Frecuency.NONE :
-                (Frecuency) appSession.getData(FragmentsCommons.FREQUENCY_DATA);
+    private Frequency getFrequencyData() {
+        return appSession.getData(FragmentsCommons.FREQUENCY_DATA) == null ? Frequency.NONE :
+                (Frequency) appSession.getData(FragmentsCommons.FREQUENCY_DATA);
     }
 }
