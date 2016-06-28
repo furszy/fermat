@@ -114,7 +114,9 @@ public class AvailableNodes implements RestFulServices {
 
                 List<NodeProfile> listNodeProfile = new ArrayList<>();
 
-                for (NodesCatalog nodesCatalog : nodesCatalogsFiltered.subList(0,5)) {
+                nodesCatalogsFiltered = (nodesCatalogsFiltered.size() > 10 ) ? nodesCatalogsFiltered.subList(0,5) : nodesCatalogsFiltered;
+
+                for (NodesCatalog nodesCatalog : nodesCatalogsFiltered) {
 
                     NodeProfile nodeProfile = new NodeProfile();
                     nodeProfile.setName((nodesCatalog.getName() != null ? nodesCatalog.getName() : null));
