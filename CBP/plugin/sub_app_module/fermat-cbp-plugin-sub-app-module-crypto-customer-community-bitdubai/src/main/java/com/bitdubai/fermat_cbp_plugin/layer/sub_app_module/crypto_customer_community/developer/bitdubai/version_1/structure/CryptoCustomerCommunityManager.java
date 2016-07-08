@@ -103,6 +103,7 @@ public class CryptoCustomerCommunityManager
     @Override
     public List<CryptoCustomerCommunityInformation> listWorldCryptoCustomers(CryptoCustomerCommunitySelectableIdentity selectedIdentity, DeviceLocation deviceLocation, double distance, String alias, int max, int offset) throws CantListCryptoCustomersException {
         List<CryptoCustomerCommunityInformation> worldCustomerList;
+        List<CryptoCustomerCommunityInformation> worldCustomerListLocation;
         List<CryptoCustomerActorConnection> actorConnections;
 
         try {
@@ -344,7 +345,13 @@ public class CryptoCustomerCommunityManager
                 }
 
                 Location actorLocation = cryptoCustomerCommunitySubAppModuleInformation.getLocation();
-                final Address address = geolocationManager.getAddressByCoordinate(actorLocation.getLatitude(),actorLocation.getLongitude());
+                Address address;
+                try{
+                    address = geolocationManager.getAddressByCoordinate(actorLocation.getLatitude(), actorLocation.getLongitude());
+                } catch (CantCreateAddressException ex){
+                    GeoRectangle geoRectangle = geolocationManager.getRandomGeoLocation();
+                    address = geolocationManager.getAddressByCoordinate(geoRectangle.getLatitude(), geoRectangle.getLongitude());
+                }
                 cryptoCustomerCommunitySubAppModuleInformation.setCountry(address.getCountry());
                 cryptoCustomerCommunitySubAppModuleInformation.setPlace(address.getCity());
                 filteredConnectedActors.add(cryptoCustomerCommunitySubAppModuleInformation);
