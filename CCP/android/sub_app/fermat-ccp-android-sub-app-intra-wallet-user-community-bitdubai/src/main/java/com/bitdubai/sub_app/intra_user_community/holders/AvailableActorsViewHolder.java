@@ -1,27 +1,22 @@
 package com.bitdubai.sub_app.intra_user_community.holders;
 
-import android.content.DialogInterface;
+
 import android.content.res.Resources;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.view.View;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-import com.bitdubai.fermat_android_api.layer.definition.wallet.interfaces.ReferenceAppFermatSession;
+
 import com.bitdubai.fermat_android_api.layer.definition.wallet.utils.ImagesUtils;
 import com.bitdubai.fermat_android_api.layer.definition.wallet.views.FermatTextView;
 import com.bitdubai.fermat_android_api.ui.Views.SquareImageView;
 import com.bitdubai.fermat_android_api.ui.holders.FermatViewHolder;
-import com.bitdubai.fermat_ccp_api.layer.module.intra_user.exceptions.CantGetActiveLoginIdentityException;
 import com.bitdubai.fermat_ccp_api.layer.module.intra_user.interfaces.IntraUserInformation;
 import com.bitdubai.fermat_p2p_api.layer.all_definition.communication.commons.enums.ProfileStatus;
 import com.bitdubai.sub_app.intra_user_community.R;
-import com.bitdubai.sub_app.intra_user_community.common.popups.ConnectDialog;
 
 /**
  * Created by natalia on 13/07/16.
@@ -36,7 +31,7 @@ public class  AvailableActorsViewHolder extends FermatViewHolder {
     private TextView button_add;
     private Resources res;
     private TextView response;
-
+    private FermatTextView location;
 
     /**
      * Constructor
@@ -49,16 +44,22 @@ public class  AvailableActorsViewHolder extends FermatViewHolder {
         res = itemView.getResources();
         response = (TextView) itemView.findViewById(R.id.response);
         button_add = (TextView) itemView.findViewById(R.id.button_add);
-        connectionState = (ImageView) itemView.findViewById(R.id.connection_state);
+        //connectionState = (ImageView) itemView.findViewById(R.id.connection_state);
         row_connection_state = (FermatTextView) itemView.findViewById(R.id.connection_state_user);
         thumbnail = (SquareImageView) itemView.findViewById(R.id.profile_image);
         name = (FermatTextView) itemView.findViewById(R.id.community_name);
+        location =(FermatTextView) itemView.findViewById(R.id.location);
+
        // progressBar = (ProgressBar) itemView.findViewById(R.id.progressBar);
 
 
     }
 
     public void bind(IntraUserInformation data) {
+
+        if (data.getCity()!=null||data.getCountry()!=null)
+            location.setText(data.getCountry()+", "+data.getCity());
+        else location.setText("No Location");
 
         row_connection_state.setText((data.getState().equals(ProfileStatus.ONLINE)) ? "Online" : "offline");
         if(data.getState().equals(ProfileStatus.OFFLINE))
@@ -74,7 +75,8 @@ public class  AvailableActorsViewHolder extends FermatViewHolder {
         //  button_add.setVisibility(View.VISIBLE);
         //  }
 
-        if (data.getConnectionState() != null) {
+        if (data.getConnectionState() != null)
+        {
 
             switch (data.getConnectionState()) {
                 case CONNECTED:
@@ -93,7 +95,7 @@ public class  AvailableActorsViewHolder extends FermatViewHolder {
                        //connectionState.setImageResource(R.drawable.icon_contact_no_conect);
                         response.setText("REQUEST CANCELLED");
                         response.setVisibility(View.VISIBLE);
-                    response.setTextColor(Color.parseColor("#21386D"));
+                        response.setTextColor(Color.parseColor("#21386D"));
                         button_add.setVisibility(View.GONE);
 
                     break;
@@ -168,10 +170,10 @@ public class  AvailableActorsViewHolder extends FermatViewHolder {
                 thumbnail.setVisibility(View.GONE);
 
             }
-        } else {
-            connectionState.setVisibility(View.INVISIBLE);
+        }// else {
+           // connectionState.setVisibility(View.INVISIBLE);
 
-        }
+        //}
 
 
     }

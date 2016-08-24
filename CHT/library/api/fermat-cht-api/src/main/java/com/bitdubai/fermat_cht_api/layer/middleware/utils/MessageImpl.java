@@ -4,7 +4,7 @@ import com.bitdubai.fermat_api.layer.all_definition.util.XMLParser;
 import com.bitdubai.fermat_cht_api.all_definition.enums.MessageStatus;
 import com.bitdubai.fermat_cht_api.all_definition.enums.TypeMessage;
 import com.bitdubai.fermat_cht_api.layer.middleware.interfaces.Message;
-import com.bitdubai.fermat_cht_api.layer.network_service.chat.interfaces.ChatMetadata;
+import com.bitdubai.fermat_cht_api.layer.network_service.chat.interfaces.MessageMetadata;
 
 import java.sql.Timestamp;
 import java.text.ParseException;
@@ -25,33 +25,35 @@ public class MessageImpl implements Message {
     private Timestamp messageDate;
     private UUID contactId;
     private long count;
-    public MessageImpl(){}
+
+    public MessageImpl() {
+    }
 
     public MessageImpl(
             UUID chatId,
-            ChatMetadata chatMetadata,
+            MessageMetadata messageMetadata,
             MessageStatus messageStatus,
             TypeMessage typeMessage,
             UUID contactId
-    ){
-        messageId=chatMetadata.getMessageId();
+    ) {
+        messageId = messageMetadata.getMessageId();
 //        messageId=UUID.randomUUID();
-        this.chatId=chatId;
-        message=chatMetadata.getMessage();
-        status=messageStatus;
-        type=typeMessage;
+        this.chatId = chatId;
+        message = messageMetadata.getMessage();
+        status = messageStatus;
+        type = typeMessage;
 //        messageDate=new Timestamp(System.currentTimeMillis());
         SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy HH:mm");
         Date parsedDate = null;
         try {
-            parsedDate = dateFormat.parse(chatMetadata.getDate());
+            parsedDate = dateFormat.parse(messageMetadata.getDate());
         } catch (ParseException e) {
             e.printStackTrace();
         }
         Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-        messageDate=new Timestamp(
+        messageDate = new Timestamp(
                 timestamp.getTime());
-        this.contactId=contactId;
+        this.contactId = contactId;
     }
 
     @Override
@@ -121,7 +123,7 @@ public class MessageImpl implements Message {
 
     @Override
     public void setContactId(UUID contactId) {
-        this.contactId=contactId;
+        this.contactId = contactId;
     }
 
     @Override
@@ -136,9 +138,10 @@ public class MessageImpl implements Message {
 
     /**
      * This method returns a String in XML format containing all this object information
+     *
      * @return
      */
-    public String toString(){
+    public String toString() {
         return XMLParser.parseObject(this);
     }
 }
