@@ -23,6 +23,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -112,7 +113,6 @@ public class ChatAdapterView extends LinearLayout {
     int CounterText;
     Boolean isOnline = false;
     Boolean textNeverChange = false;
-    static final int TIME_TO_REFRESH_TOOLBAR = 6000;
 
     public ChatAdapterView(Context context, ArrayList<ChatMessage> chatHistory,
                            ChatManager chatManager, ChatModuleManager moduleManager,
@@ -259,7 +259,7 @@ public class ChatAdapterView extends LinearLayout {
             }
 
 
-            if (adapter == null) {
+            if (adapter == null || adapter.chatMessages==null) {
                 adapter = new ChatAdapter(this.getContext(), (chatHistory != null) ? chatHistory : new ArrayList<ChatMessage>());
                 messagesContainer.setAdapter(adapter);
             } else {
@@ -459,9 +459,13 @@ public class ChatAdapterView extends LinearLayout {
                     @Override
                     public void onGlobalLayout() {
                         if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.KITKAT) {
-                            if (!isKeyboardShown(messageET.getRootView())) {
-                                onBackPressed();
-                            } else onAdjustKeyboard();
+                            if(messageET != null && messageET.getRootView() != null) {
+                                if (!isKeyboardShown(messageET.getRootView())) {
+                                    onBackPressed();
+                                } else {
+                                    onAdjustKeyboard();
+                                }
+                            }
                         }
                     }
                 });
@@ -473,7 +477,7 @@ public class ChatAdapterView extends LinearLayout {
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                if (chatWasCreate) {
+                if (chatWasCreate && s.length()>0) {
                     CounterText++;
                     if (CounterText == 5) {
                         BackgroundAsyncTaskWriting batw = new BackgroundAsyncTaskWriting();
@@ -489,7 +493,7 @@ public class ChatAdapterView extends LinearLayout {
                         BackgroundAsyncTaskWriting batw = new BackgroundAsyncTaskWriting();
                         batw.execute();
                     }
-                    if (s.length() > 0 && s.charAt(s.length() - 1) == '\n' && !isScrollingUp) {
+                    if ((start > 0 || s.charAt(s.length() - 1) == '\n') && !isScrollingUp) {
                         scroll();
                     }
                 }
@@ -541,36 +545,6 @@ public class ChatAdapterView extends LinearLayout {
                 }
             }
         }
-        //companionLabel.setText(leftName);
-//        } else {
-//            companionLabel.setText("Contacto");
-//        }
-
-        //if (background != -1) {
-        //    container.setBackgroundColor(background);
-        //}
-
-        messageET.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                //messageET.setText("");
-            }
-        });
-
-//        messageET.setOnTouchListener(new OnTouchListener() {
-//            public boolean onTouch(View view, MotionEvent event) {
-//                // TODO Auto-generated method stub
-//                if (view.getId() == R.id.messageEdit) {
-//                    view.getParent().requestDisallowInterceptTouchEvent(true);
-//                    switch (event.getAction() & MotionEvent.ACTION_MASK) {
-//                        case MotionEvent.ACTION_UP:
-//                            view.getParent().requestDisallowInterceptTouchEvent(false);
-//                            break;
-//                    }
-//                }
-//                return false;
-//            }
-//        });
 
         sendBtn.setOnClickListener(new OnClickListener() {
             @Override
@@ -683,7 +657,7 @@ public class ChatAdapterView extends LinearLayout {
                     chatMessage.setDate(S);
                     chatMessage.setMe(true);
                     messageET.setText("");
-                    if (adapter == null) {
+                    if (adapter == null || adapter.chatMessages==null) {
                         adapter = new ChatAdapter(getContext(), (chatHistory != null) ? chatHistory : new ArrayList<ChatMessage>());
                         messagesContainer.setAdapter(adapter);
                     }
@@ -718,6 +692,16 @@ public class ChatAdapterView extends LinearLayout {
                 }, 2500);
             }
         });*/
+    }
+
+    public void onDestroyView() {
+        rootView= null;
+        layoutManager = null;
+        messagesContainer = null;
+        messageET = null;
+        sendBtn = null;
+        contactIconCircular = null;
+        adapter = null;
     }
 
     public void getFilter(String s) {
