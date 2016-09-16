@@ -19,6 +19,7 @@ import com.bitdubai.fermat_api.layer.all_definition.enums.Actors;
 import com.bitdubai.fermat_api.layer.all_definition.enums.DeviceDirectory;
 import com.bitdubai.fermat_api.layer.all_definition.exceptions.InvalidParameterException;
 import com.bitdubai.fermat_api.layer.osa_android.database_system.Database;
+import com.bitdubai.fermat_api.layer.osa_android.database_system.DatabaseFilterOrder;
 import com.bitdubai.fermat_api.layer.osa_android.database_system.DatabaseFilterType;
 import com.bitdubai.fermat_api.layer.osa_android.database_system.DatabaseTable;
 import com.bitdubai.fermat_api.layer.osa_android.database_system.DatabaseTableRecord;
@@ -390,6 +391,8 @@ public abstract class ActorConnectionDao<T extends ActorConnection> {
 
         try {
 
+            actorConnectionsTable.addFilterOrder(ActorConnectionDatabaseConstants.ACTOR_CONNECTIONS_ALIAS_COLUMN_NAME, DatabaseFilterOrder.ASCENDING);
+
             actorConnectionsTable.loadToMemory();
 
             List<DatabaseTableRecord> records = actorConnectionsTable.getRecords();
@@ -464,7 +467,7 @@ public abstract class ActorConnectionDao<T extends ActorConnection> {
             record.setLongValue(ActorConnectionDatabaseConstants.ACTOR_CONNECTIONS_UPDATE_TIME_COLUMN_NAME, actorConnection.getUpdateTime());
 
             if (actorConnection.getImage() != null && actorConnection.getImage().length > 0)
-                persistNewUserProfileImage(actorConnection.getPublicKey(), actorConnection.getImage());
+                persistNewUserProfileImage(actorConnection.getConnectionId(), actorConnection.getImage());
 
             return record;
         } catch (final Exception e) {
@@ -478,14 +481,14 @@ public abstract class ActorConnectionDao<T extends ActorConnection> {
 
     protected abstract T buildActorConnectionNewRecord(final DatabaseTableRecord record) throws InvalidParameterException;
 
-    protected void persistNewUserProfileImage(final String publicKey,
+    protected void persistNewUserProfileImage(final UUID connectionId,
                                               final byte[] profileImage) throws CantPersistProfileImageException {
 
         try {
 
             PluginBinaryFile file = this.pluginFileSystem.createBinaryFile(pluginId,
                     PROFILE_IMAGE_DIRECTORY_NAME,
-                    buildProfileImageFileName(publicKey),
+                    buildProfileImageFileName(connectionId),
                     FilePrivacy.PRIVATE,
                     FileLifeSpan.PERMANENT
             );
@@ -518,13 +521,13 @@ public abstract class ActorConnectionDao<T extends ActorConnection> {
         }
     }
 
-    protected void deleteNewUserProfileImage(final String publicKey) throws CantPersistProfileImageException {
+    protected void deleteNewUserProfileImage(final UUID connectionId) throws CantPersistProfileImageException {
 
         try {
 
             this.pluginFileSystem.deleteBinaryFile(pluginId,
                     PROFILE_IMAGE_DIRECTORY_NAME,
-                    buildProfileImageFileName(publicKey),
+                    buildProfileImageFileName(connectionId),
                     FilePrivacy.PRIVATE,
                     FileLifeSpan.PERMANENT
             );
@@ -547,14 +550,14 @@ public abstract class ActorConnectionDao<T extends ActorConnection> {
     }
 
 
-    protected byte[] getProfileImage(final String publicKey) throws CantGetProfileImageException,
+    protected byte[] getProfileImage(final UUID connectionId) throws CantGetProfileImageException,
             FileNotFoundException {
 
         try {
 
             PluginBinaryFile file = this.pluginFileSystem.getBinaryFile(pluginId,
                     PROFILE_IMAGE_DIRECTORY_NAME,
-                    buildProfileImageFileName(publicKey),
+                    buildProfileImageFileName(connectionId),
                     FilePrivacy.PRIVATE,
                     FileLifeSpan.PERMANENT
             );
@@ -584,8 +587,8 @@ public abstract class ActorConnectionDao<T extends ActorConnection> {
         }
     }
 
-    private String buildProfileImageFileName(final String publicKey) {
-        return PROFILE_IMAGE_FILE_NAME_PREFIX + "_" + publicKey;
+    private String buildProfileImageFileName(final UUID connectionId) {
+        return PROFILE_IMAGE_FILE_NAME_PREFIX + "_" + connectionId.toString();
     }
 
 }
