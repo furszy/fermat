@@ -18,7 +18,7 @@ import android.widget.AdapterView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
-import android.widget.SearchView;
+import android.support.v7.widget.SearchView;
 import android.widget.TextView;
 
 import com.bitbudai.fermat_cht_android_sub_app_chat_bitdubai.adapters.ContactListAdapter;
@@ -149,21 +149,19 @@ public class ContactsListFragment
             contactStatus.clear();
             if (chatIdentity != null) {
                 List<ChatActorCommunityInformation> con = chatManager.listAllConnectedChatActor(chatIdentity, MAX, offset);
-                Collections.sort(con, new Comparator<ChatActorCommunityInformation>() {
-                    @Override
-                    public int compare(ChatActorCommunityInformation actorA, ChatActorCommunityInformation actorB) {
-                        return (actorA.getAlias().trim().toLowerCase().compareTo(actorB.getAlias().trim().toLowerCase()));
-                    }
-                });
+
                 int size = con.size();
                 if (size > 0) {
                     for (ChatActorCommunityInformation conta : con) {
                         contactname.add(conta.getAlias());
                         contactid.add(conta.getPublicKey());
+                        ByteArrayInputStream bytes;
                         if (conta.getImage() != null) {
-                            contacticon.add((new BitmapDrawable(new ByteArrayInputStream(conta.getImage()))).getBitmap());
+                            bytes = new ByteArrayInputStream(conta.getImage());
+                            BitmapDrawable bmd = new BitmapDrawable(bytes);
+                            contacticon.add(bmd.getBitmap());
                         } else {
-                            Drawable d = getResources().getDrawable(R.drawable.cht_center_profile_icon_center);
+                            Drawable d = getResources().getDrawable(R.drawable.cht_image_profile);
                             Bitmap bitmap = ((BitmapDrawable) d).getBitmap();
                             bitmap.compress(Bitmap.CompressFormat.JPEG, 100, (new ByteArrayOutputStream()));
                             contacticon.add(bitmap);
@@ -216,7 +214,7 @@ public class ContactsListFragment
         nochatssubtitle.setVisibility(View.VISIBLE);
         nochatssubtitle1.setVisibility(View.VISIBLE);
         nochatssubtitle2.setVisibility(View.VISIBLE);
-        mSwipeRefreshLayout = (SwipeRefreshLayout) layout.findViewById(R.id.swipe_container);
+        //mSwipeRefreshLayout = (SwipeRefreshLayout) layout.findViewById(R.id.swipe_container);
         updateValues();
         adapter = new ContactListAdapter(getActivity(), contactname, contacticon, contactid, contactStatus,
                 errorManager, appSession, this);
@@ -236,39 +234,48 @@ public class ContactsListFragment
             }
         });
 
-        mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-            @Override
-            public void onRefresh() {
-                new Handler().postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            //Toast.makeText(getActivity(), "Contacts Updated", Toast.LENGTH_SHORT).show();
-                            updateValues();
-                            final ContactListAdapter adaptador =
-                                    new ContactListAdapter(getActivity(), contactname, contacticon, contactid, contactStatus,
-                                            errorManager, appSession, null);
-                            adaptador.refreshEvents(contactname, contacticon, contactid);
-                            list.invalidateViews();
-                            list.requestLayout();
-                        } catch (Exception e) {
-                            errorManager.reportUnexpectedSubAppException(SubApps.CHT_CHAT, UnexpectedSubAppExceptionSeverity.DISABLES_SOME_FUNCTIONALITY_WITHIN_THIS_FRAGMENT, e);
-                        }
-                        mSwipeRefreshLayout.setRefreshing(false);
-                    }
-                }, 2500);
-            }
-        });
+//        mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+//            @Override
+//            public void onRefresh() {
+//                new Handler().postDelayed(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        try {
+//                            updateValues();
+//                            final ContactListAdapter adaptador =
+//                                    new ContactListAdapter(getActivity(), contactname, contacticon, contactid, contactStatus,
+//                                            errorManager, appSession, null);
+//                            adaptador.refreshEvents(contactname, contacticon, contactid);
+//                            list.invalidateViews();
+//                            list.requestLayout();
+//                        } catch (Exception e) {
+//                            errorManager.reportUnexpectedSubAppException(SubApps.CHT_CHAT, UnexpectedSubAppExceptionSeverity.DISABLES_SOME_FUNCTIONALITY_WITHIN_THIS_FRAGMENT, e);
+//                        }
+//                        mSwipeRefreshLayout.setRefreshing(false);
+//                    }
+//                }, 2500);
+//            }
+//        });
         // Inflate the list fragment layout
-        return layout;//return inflater.inflate(R.layout.contact_list_fragment, container, false);
+        return layout;
     }
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        menu.clear();
     }
 
     public void onOptionMenuPrepared(Menu menu) {
-        MenuItem searchItem = menu.findItem(1);
+        menu.clear();
+        MenuInflater inflater = getActivity().getMenuInflater();
+        inflater.inflate(R.menu.contact_list_menu, menu);
+        menu.add(0, 2, 2, getResourceString(R.string.menu_go_to_profile))
+                .setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
+        menu.add(0, 3, 3, getResourceString(R.string.menu_go_to_community))
+                .setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
+        menu.add(0, 4, 4, getResourceString(R.string.menu_help))
+                .setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
+        MenuItem searchItem = menu.findItem(R.id.menu_search);// menu.findItem(1);
         if (searchItem != null) {
             searchView = (SearchView) searchItem.getActionView();
             searchView.setQueryHint(getResources().getString(R.string.cht_search_hint));
@@ -294,9 +301,7 @@ public class ContactsListFragment
                 if (filterString.length() > 0) {
                     searchView.setQuery(filterString, true);
                     searchView.setIconified(false);
-                    //getToolbar().setTitle("");
                 } else {
-                    //getToolbar().setTitle("P2P Chat");
                     updateValues();
                     adapter.refreshEvents(contactname, contacticon, contactid);
                 }
@@ -359,7 +364,7 @@ public class ContactsListFragment
         if (adapter.getContactIcon(position) != null) {
             adapter.getContactIcon(position).compress(Bitmap.CompressFormat.PNG, 100, stream);
         } else {
-            Drawable d = getResources().getDrawable(R.drawable.cht_center_profile_icon_center); // the drawable (Captain Obvious, to the rescue!!!)
+            Drawable d = getResources().getDrawable(R.drawable.cht_image_profile); // the drawable (Captain Obvious, to the rescue!!!)
             Bitmap bitmap = ((BitmapDrawable) d).getBitmap();
             bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
         }
@@ -377,37 +382,37 @@ public class ContactsListFragment
     @Override
     public void onDestroy() {
         super.onDestroy();
-        unbindDrawables(layout.findViewById(R.id.list));
-        unbindDrawables(layout.findViewById(R.id.empty_view));
-        adapter.clear();
-        chatSettings = null;
-        errorManager = null;
-        chatIdentity = null;
-        chatManager = null;
-        applicationsHelper = null;
-        layout.destroyDrawingCache();
-        layout = null;
-        contactname.clear();
-        contacticon.clear();
-        contactid.clear();
-        contactStatus.clear();
-        emptyView.destroyDrawingCache();
-        emptyView.removeAllViewsInLayout();
-        chatIdentity = null;
-        emptyView.removeAllViews();
-        noData.destroyDrawingCache();
-        noDatalabel.destroyDrawingCache();
-        nochatssubtitle.destroyDrawingCache();
-        nochatssubtitle1.destroyDrawingCache();
-        nochatssubtitle2.destroyDrawingCache();
-        list.removeAllViewsInLayout();
-        list = null;
-        mSwipeRefreshLayout.removeAllViews();
-        mSwipeRefreshLayout.removeAllViewsInLayout();
-        mSwipeRefreshLayout.destroyDrawingCache();
-        mSwipeRefreshLayout = null;
-        searchView = null;
-        applicationsHelper = null;
+//        unbindDrawables(layout.findViewById(R.id.list));
+//        unbindDrawables(layout.findViewById(R.id.empty_view));
+//        adapter.clear();
+//        chatSettings = null;
+//        errorManager = null;
+//        chatIdentity = null;
+//        chatManager = null;
+//        applicationsHelper = null;
+//        layout.destroyDrawingCache();
+//        layout = null;
+//        contactname.clear();
+//        contacticon.clear();
+//        contactid.clear();
+//        contactStatus.clear();
+//        emptyView.destroyDrawingCache();
+//        emptyView.removeAllViewsInLayout();
+//        chatIdentity = null;
+//        emptyView.removeAllViews();
+//        noData.destroyDrawingCache();
+//        noDatalabel.destroyDrawingCache();
+//        nochatssubtitle.destroyDrawingCache();
+//        nochatssubtitle1.destroyDrawingCache();
+//        nochatssubtitle2.destroyDrawingCache();
+//        list.removeAllViewsInLayout();
+//        list = null;
+//        mSwipeRefreshLayout.removeAllViews();
+//        mSwipeRefreshLayout.removeAllViewsInLayout();
+////        mSwipeRefreshLayout.destroyDrawingCache();
+//        mSwipeRefreshLayout = null;
+//        searchView = null;
+//        applicationsHelper = null;
         destroy();
     }
 
