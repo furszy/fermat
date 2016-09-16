@@ -266,7 +266,10 @@ public class AppActivity extends FermatActivity implements FermatScreenSwapper {
             if (nextActivity != null) {
                 if (!nextActivity.equals(lastActivity)) {
                     resetThisActivity();
-                    loadUI(FermatApplication.getInstance().getAppManager().getAppsSession(fermatStructure.getPublicKey()));
+                    Intent intent = new Intent(this,AppActivity.class);
+                    intent.putExtra(ApplicationConstants.INTENT_DESKTOP_APP_PUBLIC_KEY, fermatStructure.getPublicKey());
+                    startActivity(intent);
+//                    loadUI(FermatApplication.getInstance().getAppManager().getAppsSession(fermatStructure.getPublicKey()));
                 }
             } else {
                 Log.e(TAG, "Method: New,  nextActivity null Don't be afraid. Contact furszy., activity code: " + activityName + ". AppPublicKey:"+appToOpenPublicKey+" Please verify that the activity code exist in the fermat structure: " + fermatStructure.getPublicKey() + " \n Extra info: \n LastActivity: " + lastActivity + " FermatStructure: " + fermatStructure + "\n" + Arrays.toString(FermatApplication.getInstance().getAppManager().getRecentsAppsStack().toArray()));
